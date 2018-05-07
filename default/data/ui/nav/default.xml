@@ -1,4 +1,4 @@
-<nav search_view="search" color="#65A637">
+<nav search_view="search" color="#FD9805">
   <view name="search" default='true' />
   <view name="datasets" />
   <view name="reports" />
