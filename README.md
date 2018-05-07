@@ -1,2 +1,2 @@
-# aws_marketplace_app_for_splunk
-AWS Marketplace App for Splunk
+# AWS Market Place App for Splunk
+THis app is designed to collect data from the AWS Marketplace and analyize how users are deploying your application / AMI's. 
