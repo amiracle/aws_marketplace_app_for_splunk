@@ -1,0 +1,61 @@
+<dashboard>
+  <label>Health Check</label>
+  <description>Health Check inputs for Market Place</description>
+  <row>
+    <panel>
+      <table>
+        <title>Indexing S3 Data?</title>
+        <search>
+          <query>index=_internal sourcetype="aws:s3:log" | dedup message | stats list(message) by bucket_name</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Number of Sources</title>
+      <table>
+        <search>
+          <query>sourcetype=aws:csv | stats dc(source) AS Sources</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <title>Size by S3 Bucket</title>
+        <search>
+          <query>index=_internal sourcetype="aws:s3:log" | stats sum(size) by bucket_name</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Warn or Errors Getting S3 Data In</title>
+      <table>
+        <title>Should be empty</title>
+        <search>
+          <query>index=_internal sourcetype="aws:s3:log" level=WARN OR level=ERROR | stats count,values(level) by bucket_name</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+</dashboard>
