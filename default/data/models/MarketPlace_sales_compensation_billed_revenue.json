@@ -1,0 +1,26 @@
+{
+    "modelName": "MarketPlace_sales_compensation_billed_revenue",
+    "displayName": "MarketPlace_sales_compensation_billed_revenue",
+    "description": "Marketplace Data Set",
+    "objectSummary": {
+        "Event-Based": 0,
+        "Transaction-Based": 0,
+        "Search-Based": 1
+    },
+    "objects": [
+        {
+            "objectName": "RootObject",
+            "displayName": "MarketPlace_sales_compensation_billed_revenue",
+            "parentName": "BaseSearch",
+            "comment": "",
+            "fields": [],
+            "calculations": [],
+            "constraints": [],
+            "lineage": "RootObject",
+            "baseSearch": "index=main sourcetype=aws:csv source=*sales_compensation_billed_revenue* | fields \"_time\", \"field1\", \"field2\", \"field3\", \"field4\", \"field5\", \"field6\", \"field8\", \"_raw\" | rename \"field1\" AS \"Customer_AWS_Account_Number\" | rename \"field2\" AS \"Country\" | rename \"field3\" AS \"State\" | rename \"field4\" AS \"City\" | rename \"field5\" AS \"ZipCode\" | rename \"field6\" AS \"EmailDomain\" | rename \"field8\" AS \"Product\""
+        }
+    ],
+    "objectNameList": [
+        "RootObject"
+    ]
+}

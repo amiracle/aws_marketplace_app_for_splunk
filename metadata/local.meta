@@ -9,3 +9,80 @@ modtime = 1525727242.558303000
 [app/package/check_for_updates]
 version = 7.0.3
 modtime = 1525727242.559361000
+
+[transforms/REPORT-subscriber_hourly_monthly_subscriptions]
+owner = admin
+version = 7.1.0
+modtime = 1525809804.048243000
+
+[props/aws%3Acsv%3Amp/REPORT-subscriber_hourly_monthly_subscriptions]
+access = read : [ * ], write : [ admin ]
+export = system
+owner = admin
+version = 7.1.0
+modtime = 1525809804.185761000
+
+[views/aws_marketplace_overview]
+version = 7.1.0
+modtime = 1526699097.359274000
+
+[inputs/script%3A%2F%2F%24SPLUNK_HOME%2Fetc%2Fapps%2Faws_marketplace_app_for_splunk%2Fbin%2Fcustomer_marketplace.sh]
+owner = admin
+version = 7.1.0
+modtime = 1526623702.690875000
+
+[transforms/REPORT-csv]
+owner = admin
+version = 7.1.0
+modtime = 1526624339.076498000
+
+[props/aws%3Acsv/REPORT-csv]
+access = read : [ * ], write : [ admin ]
+export = system
+owner = admin
+version = 7.1.0
+modtime = 1526624339.205368000
+
+[datamodels/MarketPlace]
+export = none
+owner = admin
+version = 7.1.0
+modtime = 1526649739.029954000
+
+[models/MarketPlace]
+export = none
+owner = admin
+version = 7.1.0
+modtime = 1526649739.033002000
+
+[datamodels/MarketPlace_sales_compensation_billed_revenue]
+export = none
+owner = admin
+version = 7.1.0
+modtime = 1526649726.277374000
+
+[models/MarketPlace_sales_compensation_billed_revenue]
+export = none
+owner = admin
+version = 7.1.0
+modtime = 1526649726.282627000
+
+[nav/default]
+version = 7.1.0
+modtime = 1526676747.959113000
+
+[transforms/REPORT-aws%3Acsv]
+owner = admin
+version = 7.1.0
+modtime = 1526672239.682387000
+
+[props/aws%3Acsv/REPORT-aws%3Acsv]
+access = read : [ * ], write : [ admin ]
+owner = admin
+version = 7.1.0
+modtime = 1526672239.883098000
+
+[views/health_check]
+owner = admin
+version = 7.1.0
+modtime = 1526676860.330947000

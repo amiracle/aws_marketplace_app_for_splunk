@@ -1,7 +1,7 @@
 <nav search_view="search" color="#FD9805">
-  <view name="search" default='true' />
+  <view name="aws_marketplace_overview" default='true' />
+  <view name="health_check" />
+  <view name="search" />
   <view name="datasets" />
-  <view name="reports" />
-  <view name="alerts" />
-  <view name="dashboards" />
+  <a href="https://aws.amazon.com/marketplace/management/tour">Marketplace</a>
 </nav>

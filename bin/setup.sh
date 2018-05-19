@@ -44,3 +44,19 @@ else
         echo snsarn="$snsarn" >> awsvars
         echo "Created aws variables file."
 fi
+
+# Setup Splunk AWS S3 Input
+# echo "Your hostname is `$hostname`?"
+# read splhostname
+# echo "Your management URI is https://`$hostname`:8089"
+# echo "Enter your Splunk admin user:"
+# read spluser
+#echo "Enter your Splunk password for the user:"
+#read splpassword
+#echo "Create your S3 Modular Input"
+#echo "Name your modular input:"
+#read s3inputname
+#
+#	if [ "$ynhostname" == *y* ];then
+#	echo "Adding the hostname to the splunk-info.json file"
+#	echo 
