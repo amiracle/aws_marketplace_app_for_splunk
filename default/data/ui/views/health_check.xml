@@ -1,61 +1,108 @@
-<dashboard>
+<form>
   <label>Health Check</label>
   <description>Health Check inputs for Market Place</description>
+  <fieldset submitButton="true" autoRun="true">
+    <input type="time" token="time" searchWhenChanged="true">
+      <label>Time</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
   <row>
     <panel>
-      <table>
-        <title>Indexing S3 Data?</title>
+      <single>
+        <title>Number of Errors</title>
         <search>
-          <query>index=_internal sourcetype="aws:s3:log" | dedup message | stats list(message) by bucket_name</query>
-          <earliest>-24h@h</earliest>
-          <latest>now</latest>
+          <query>index=_internal sourcetype=splunkd aws_marketplace* log_level=ERROR | stats count</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
         </search>
         <option name="drilldown">none</option>
-      </table>
+      </single>
     </panel>
     <panel>
       <title>Number of Sources</title>
-      <table>
+      <single>
         <search>
-          <query>sourcetype=aws:csv | stats dc(source) AS Sources</query>
-          <earliest>-24h@h</earliest>
-          <latest>now</latest>
+          <query>sourcetype=aws:csv:* | stats dc(source) AS Sources</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
         </search>
-        <option name="count">20</option>
-        <option name="dataOverlayMode">none</option>
         <option name="drilldown">none</option>
-        <option name="percentagesRow">false</option>
-        <option name="rowNumbers">false</option>
-        <option name="totalsRow">false</option>
-        <option name="wrap">true</option>
-      </table>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="underLabel">Number of Sources</option>
+      </single>
     </panel>
     <panel>
-      <table>
-        <title>Size by S3 Bucket</title>
+      <title>Size by S3 Bucket</title>
+      <single>
         <search>
-          <query>index=_internal sourcetype="aws:s3:log" | stats sum(size) by bucket_name</query>
-          <earliest>-24h@h</earliest>
-          <latest>now</latest>
+          <query>index=_internal sourcetype="aws:s3:log" bucket_name=*marketplace* | eval mb=size/1024/1024 | stats sum(mb) AS Size by bucket_name | table Size</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
         </search>
         <option name="drilldown">none</option>
-      </table>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="underLabel">Megabytes</option>
+      </single>
     </panel>
   </row>
   <row>
     <panel>
-      <title>Warn or Errors Getting S3 Data In</title>
+      <title>Dates Collected from S3 buckets</title>
       <table>
-        <title>Should be empty</title>
+        <title>Dates Collected</title>
         <search>
-          <query>index=_internal sourcetype="aws:s3:log" level=WARN OR level=ERROR | stats count,values(level) by bucket_name</query>
-          <earliest>-24h@h</earliest>
-          <latest>now</latest>
+          <query>sourcetype="aws:csv:daily_business_*" source=*.csv | stats count by source | rex field=source "^\w+\d+://\w+\-\w+\-\w+/\w+_\w+_\w+_\w+_\w+_(?P&lt;kdate&gt;[^\.]+)" | table kdate source | sort -kdate</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Did the scripts run without error?</title>
+      <table>
+        <title>Error Messages (should be blank)</title>
+        <search>
+          <query>index=_internal sourcetype=splunkd aws_marketplace* log_level=ERROR</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
         </search>
         <option name="count">10</option>
         <option name="drilldown">none</option>
       </table>
     </panel>
+    <panel>
+      <title>Warn or Errors Getting S3 Data In</title>
+      <table>
+        <title>Permission or throttling issues? (should be blank)</title>
+        <search>
+          <query>index=_internal sourcetype="aws:s3:log" level=WARN OR level=ERROR | stats count,values(level) by bucket_name</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Indexing S3 Data?</title>
+      <table>
+        <title>Detailed steps for indexing data from s3 bucket</title>
+        <search>
+          <query>index=_internal sourcetype="aws:s3:log" bucket_name=*marketplace* | dedup message | stats list(message) by bucket_name</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
   </row>
-</dashboard>
+</form>

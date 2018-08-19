@@ -1,5 +1,8 @@
 #!/bin/sh
 
+#Set App home variable
+export APP_HOME=$HOME/etc/apps/aws_marketplace_app_for_splunk
+echo `date` "Started Setup for AWS Marketplace App" >> $APP_HOME/logs/setup.log
 # This script will help setup your matketplace.sh file
 
 # Set your local directories
@@ -45,6 +48,7 @@ else
         echo "Created aws variables file."
 fi
 
+echo `date` "Completed Setup for AWS Marketplace App" >> $APP_HOME/logs/setup.log
 # Setup Splunk AWS S3 Input
 # echo "Your hostname is `$hostname`?"
 # read splhostname

@@ -2,7 +2,7 @@
   <label>AWS Marketplace Overview</label>
   <description>Overview of Marketplace transactions</description>
   <fieldset submitButton="true" autoRun="true">
-    <input type="time" token="time">
+    <input type="time" token="time" searchWhenChanged="true">
       <label>Time</label>
       <default>
         <earliest>-24h@h</earliest>
@@ -12,203 +12,44 @@
   </fieldset>
   <row>
     <panel>
-      <title>Deployment Start Dates</title>
-      <chart>
-        <title>Orders over time</title>
+      <title>Monthly Revenue</title>
+      <table>
+        <title>Orders by Product and Customer Email Domain</title>
         <search>
-          <query>index=main sourcetype=aws:csv   source="s3://*/customer_subscriber_annual_subscriptions_*.csv" field2!="Product Title" | eval newtime=strptime(field8,"%Y-%m-%d") | eval _time=newtime | timechart count</query>
+          <query>sourcetype="aws:csv:*" source=*.csv sourcetype="aws:csv:monthly_revenue_billing_and_revenue_data" Customer_AWS_Account_Number!="Customer AWS Account Number" | eval net_amount=(Customer_Billed_Amount + AWS_Fee) | dedup net_amount | stats list(net_amount) AS "Net Amount" by Customer_Email_Domain, Product_Title | rename Product_Title AS "Product", Customer_Email_Domain AS "Customer Email" |sort - "Net Amount"</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
         </search>
-        <option name="charting.axisTitleX.text">Time</option>
-        <option name="charting.axisTitleY.text">Deployments</option>
-        <option name="charting.chart">area</option>
-        <option name="charting.drilldown">none</option>
-        <option name="refresh.display">progressbar</option>
-      </chart>
-    </panel>
-  </row>
-  <row>
-    <panel>
-      <chart>
-        <title>Product by Rate</title>
-        <search>
-          <query>source=*/customer* sourcetype="aws:csv" field2!="Product Title"  | stats count(eval(like(field2, "%Splunk Cloud%"))) AS "Splunk Cloud", count(eval(like(field2, "%Splunk Light%"))) AS "Splunk Light", count(eval(like(field2, "%Splunk Enterprise%"))) AS "Splunk Enterprise" | transpose</query>
-          <earliest>$time.earliest$</earliest>
-          <latest>$time.latest$</latest>
-        </search>
-        <option name="charting.chart">bar</option>
-        <option name="charting.drilldown">none</option>
-        <option name="charting.legend.placement">none</option>
-        <option name="refresh.display">progressbar</option>
-      </chart>
-    </panel>
-    <panel>
-      <title>Disbursed amount by Instance Hours</title>
-      <chart>
-        <search>
-          <query>index=main sourcetype=aws:csv source="s3://*/disbursed_amount_by_instance_hours_*.csv" field1!=Product | reverse | rename field1 AS Product field3 AS "Usage Type Description", field4 AS Rate, field5 AS "User Count", field6 AS "Solution Title", field6 AS "Instance Hours" | stats count by Product, Rate, "Instance Hours" | addcoltotals label=Total</query>
-          <earliest>$time.earliest$</earliest>
-          <latest>$time.latest$</latest>
-          <sampleRatio>1</sampleRatio>
-        </search>
-        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
-        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
-        <option name="charting.axisTitleX.visibility">visible</option>
-        <option name="charting.axisTitleY.visibility">visible</option>
-        <option name="charting.axisTitleY2.visibility">visible</option>
-        <option name="charting.axisX.abbreviation">none</option>
-        <option name="charting.axisX.scale">linear</option>
-        <option name="charting.axisY.abbreviation">none</option>
-        <option name="charting.axisY.scale">linear</option>
-        <option name="charting.axisY2.abbreviation">none</option>
-        <option name="charting.axisY2.enabled">0</option>
-        <option name="charting.axisY2.scale">inherit</option>
-        <option name="charting.chart">pie</option>
-        <option name="charting.chart.bubbleMaximumSize">50</option>
-        <option name="charting.chart.bubbleMinimumSize">10</option>
-        <option name="charting.chart.bubbleSizeBy">area</option>
-        <option name="charting.chart.nullValueMode">gaps</option>
-        <option name="charting.chart.showDataLabels">none</option>
-        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
-        <option name="charting.chart.stackMode">default</option>
-        <option name="charting.chart.style">shiny</option>
-        <option name="charting.drilldown">none</option>
-        <option name="charting.layout.splitSeries">0</option>
-        <option name="charting.layout.splitSeries.allowIndependentYRanges">0</option>
-        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
-        <option name="charting.legend.mode">standard</option>
-        <option name="charting.legend.placement">right</option>
-        <option name="charting.lineWidth">2</option>
-        <option name="refresh.display">progressbar</option>
-        <option name="trellis.enabled">0</option>
-        <option name="trellis.scales.shared">1</option>
-        <option name="trellis.size">medium</option>
-      </chart>
-    </panel>
-  </row>
-  <row>
-    <panel>
-      <title>Estimated Revenue Total (in USD)</title>
-      <single>
-        <title>Revenue Total</title>
-        <search>
-          <query>sourcetype=aws:csv source="s3://*/monthly_revenue_billing_and_revenue_data_*.csv" | reverse | rename field8 AS "Billed Amount" field9 AS "Aws Fee" field10 as "Refund" field11 as "aws fee refund" field12 AS "Partner Revenue" field15 AS "Sales Tax" field16 AS "Sales Tax Refund" | stats sum("Billed Amount")</query>
-          <earliest>$time.earliest$</earliest>
-          <latest>$time.latest$</latest>
-          <sampleRatio>1</sampleRatio>
-        </search>
-        <option name="colorMode">block</option>
+        <option name="count">10</option>
         <option name="drilldown">none</option>
-        <option name="numberPrecision">0.00</option>
-        <option name="rangeColors">["0xdc4e41","0xf1813f","0xf8be34","0x53a051","0x53a051"]</option>
-        <option name="rangeValues">[500,700,900,1000]</option>
         <option name="refresh.display">progressbar</option>
-        <option name="underLabel">Currency in USD</option>
-        <option name="unit">$</option>
-        <option name="unitPosition">before</option>
-        <option name="useColors">1</option>
-      </single>
-      <single>
-        <title>Disbursed Amount</title>
-        <search>
-          <query>sourcetype=aws:csv source="s3://*/disbursed_amount_by_customer_geo_*.csv" field5!="Disbursed Amount" | rename field5 AS "Disbursed Amount" | stats sum("Disbursed Amount") AS "Disbursed Amount"</query>
-          <earliest>$time.earliest$</earliest>
-          <latest>$time.latest$</latest>
-          <sampleRatio>1</sampleRatio>
-        </search>
-        <option name="numberPrecision">0.00</option>
-        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
-        <option name="refresh.display">progressbar</option>
-        <option name="underLabel">Currency in USD</option>
-        <option name="unit">$</option>
-        <option name="unitPosition">before</option>
-      </single>
-    </panel>
-    <panel>
-      <title>Disburse Amount by Account ID</title>
-      <single>
-        <title>Billing by Account</title>
-        <search>
-          <query>sourcetype=aws:csv source="s3://*/monthly_revenue_annual_subscriptions_*.csv" field21!="Customer AWS Account Number" | rename field9 AS startime | eval newtime=strptime(startime,"%Y-%m-%d %H:%M:%S") | eval _time=newtime | stats sum(field12) by field21</query>
-          <earliest>$time.earliest$</earliest>
-          <latest>$time.latest$</latest>
-        </search>
-        <option name="colorMode">block</option>
-        <option name="drilldown">none</option>
-        <option name="numberPrecision">0.00</option>
-        <option name="rangeColors">["0xdc4e41","0xf8be34","0xf1813f","0x53a051"]</option>
-        <option name="rangeValues">[0,50000,80000]</option>
-        <option name="refresh.display">progressbar</option>
-        <option name="trellis.enabled">1</option>
-        <option name="trellis.size">medium</option>
-        <option name="underLabel">Currency in USD</option>
-        <option name="unit">$</option>
-        <option name="unitPosition">before</option>
-        <option name="useColors">1</option>
-      </single>
+      </table>
     </panel>
   </row>
   <row>
     <panel>
       <chart>
-        <title>Unique Users over time</title>
+        <title>Revenue Over Time</title>
         <search>
-          <query>sourcetype=aws:csv source="s3://*/monthly_revenue_annual_subscriptions_*.csv" field9!="Annual Subscription Start Date" | rename field9 AS startime | eval newtime=strptime(startime,"%Y-%m-%d %H:%M:%S") | eval _time=newtime | timechart count by field22</query>
+          <query>sourcetype="aws:csv:daily_business_usage_by_instance_type"  source=*.csv | rex field=source "^\w+\d+://\w+\-\w+\-\w+/\w+_\w+_\w+_\w+_(?P&lt;kdate&gt;[^\.]+)" | eval newtime=strptime(kdate,"%Y-%m-%d") | eval _time=newtime | timechart sum("Estimated_Revenue") as "Estimated Revenues USD" span=1d</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
         </search>
         <option name="charting.chart">line</option>
         <option name="charting.drilldown">none</option>
-        <option name="refresh.display">progressbar</option>
       </chart>
     </panel>
     <panel>
-      <single>
-        <title>Total Unique Subscriptions</title>
+      <chart>
+        <title>Engaged Accounts over time</title>
         <search>
-          <query>sourcetype=aws:csv source="s3://*/monthly_revenue_annual_subscriptions_*.csv" field21!="Customer AWS*" | stats dc(field21) as "Unique Subscriptions"</query>
+          <query>source=*.csv sourcetype="aws:csv:daily_business_usage_by_instance_type" Customer_AWS_Account_Number!="Customer AWS Account Number" Product_Title="*" | rex field=source "^\w+\d+://\w+\-\w+\-\w+/\w+_\w+_\w+_\w+_(?P&lt;kdate&gt;[^\.]+)" | eval newtime=strptime(kdate,"%Y-%m-%d") | eval _time=newtime | timechart dc(Customer_AWS_Account_Number) span=1d</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
         </search>
-        <option name="drilldown">none</option>
-        <option name="refresh.display">progressbar</option>
-      </single>
-    </panel>
-  </row>
-  <row>
-    <panel>
-      <title>Rates by Product</title>
-      <table>
-        <title>Rates</title>
-        <search>
-          <query>index=main sourcetype=aws:csv source="s3://*/disbursed_amount_by_instance_hours_*.csv" field1!=Product
-| reverse 
-| rename field1 AS Product field3 AS "Usage Type Description", field4 AS Rate, field5 AS "User Count", field6 AS "Solution Title", field6 AS "Instance Hours" 
-| stats sum(Rate) AS "Rates" by Product</query>
-          <earliest>$time.earliest$</earliest>
-          <latest>$time.latest$</latest>
-        </search>
-        <option name="drilldown">none</option>
-        <option name="refresh.display">progressbar</option>
-      </table>
-    </panel>
-    <panel>
-      <title>Hours used by Product</title>
-      <table>
-        <title>Hours Used</title>
-        <search>
-          <query>index=main sourcetype=aws:csv source="s3://*/disbursed_amount_by_instance_hours_*.csv" field1!=Product
-| reverse 
-| rename field1 AS Product field3 AS "Usage Type Description", field4 AS Rate, field5 AS "User Count", field6 AS "Solution Title", field6 AS "Instance Hours" 
-| stats sum("Instance Hours") AS "Hours" by Product</query>
-          <earliest>$time.earliest$</earliest>
-          <latest>$time.latest$</latest>
-          <sampleRatio>1</sampleRatio>
-        </search>
-        <option name="drilldown">none</option>
-        <option name="refresh.display">progressbar</option>
-      </table>
+        <option name="charting.chart">line</option>
+        <option name="charting.drilldown">none</option>
+      </chart>
     </panel>
   </row>
 </form>

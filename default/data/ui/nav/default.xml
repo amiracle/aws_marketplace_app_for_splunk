@@ -1,5 +1,7 @@
 <nav search_view="search" color="#FD9805">
-  <view name="aws_marketplace_overview" default='true' />
+  <view name="aws_marketplace_overview" />
+  <view name="daily_business_report" default='true' />
+  <view name="breakdown_by_geography" />
   <view name="health_check" />
   <view name="search" />
   <view name="datasets" />
