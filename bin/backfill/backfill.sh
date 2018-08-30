@@ -3,7 +3,7 @@
 #IFS=$IFS,
 # Check for awsvars (AWS Variables) file
 export APP_HOME=$HOME/etc/apps/aws_marketplace_app_for_splunk/
-export awsvars_file=$HOME/etc/apps/aws_marketplace_app_for_splunk/bin/backfill/awsvars
+export awsvars_file=$HOME/etc/apps/aws_marketplace_app_for_splunk/bin/awsvars
 echo "`date` Missing Billing Started" >> $APP_HOME/logs/backfill.log
 awsvar=$awsvars_file
 if [ -f "$awsvar" ];then

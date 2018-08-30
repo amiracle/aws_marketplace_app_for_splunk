@@ -2,54 +2,174 @@
   <label>AWS Marketplace Overview</label>
   <description>Overview of Marketplace transactions</description>
   <fieldset submitButton="true" autoRun="true">
-    <input type="time" token="time" searchWhenChanged="true">
+    <input type="time" token="time">
       <label>Time</label>
       <default>
-        <earliest>-24h@h</earliest>
+        <earliest>-30d@d</earliest>
         <latest>now</latest>
       </default>
     </input>
   </fieldset>
   <row>
     <panel>
-      <title>Monthly Revenue</title>
-      <table>
-        <title>Orders by Product and Customer Email Domain</title>
+      <title>Deployment Start Dates</title>
+      <chart>
+        <title>Orders over time</title>
         <search>
-          <query>sourcetype="aws:csv:*" source=*.csv sourcetype="aws:csv:monthly_revenue_billing_and_revenue_data" Customer_AWS_Account_Number!="Customer AWS Account Number" | eval net_amount=(Customer_Billed_Amount + AWS_Fee) | dedup net_amount | stats list(net_amount) AS "Net Amount" by Customer_Email_Domain, Product_Title | rename Product_Title AS "Product", Customer_Email_Domain AS "Customer Email" |sort - "Net Amount"</query>
+          <query>index=main sourcetype="aws:csv:customer_subscriber_annual_subscriptions"    source="*.csv" | eval newtime=strptime(Subscription_Start_Date,"%Y-%m-%d") | eval _time=newtime | timechart count</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
         </search>
-        <option name="count">10</option>
-        <option name="drilldown">none</option>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.axisTitleY.text">Deployments</option>
+        <option name="charting.chart">area</option>
+        <option name="charting.drilldown">none</option>
         <option name="refresh.display">progressbar</option>
-      </table>
+      </chart>
     </panel>
   </row>
   <row>
     <panel>
       <chart>
-        <title>Revenue Over Time</title>
+        <title>Product by Rate</title>
         <search>
-          <query>sourcetype="aws:csv:daily_business_usage_by_instance_type"  source=*.csv | rex field=source "^\w+\d+://\w+\-\w+\-\w+/\w+_\w+_\w+_\w+_(?P&lt;kdate&gt;[^\.]+)" | eval newtime=strptime(kdate,"%Y-%m-%d") | eval _time=newtime | timechart sum("Estimated_Revenue") as "Estimated Revenues USD" span=1d</query>
+          <query>source=*.csv sourcetype="aws:csv:customer_subscriber_annual_subscriptions"    | stats count(eval(like(Product_Title, "%Splunk Cloud%"))) AS "Splunk Cloud", count(eval(like(Product_Title, "%Splunk Light%"))) AS "Splunk Light", count(eval(like(Product_Title, "%Splunk Enterprise%"))) AS "Splunk Enterprise" | transpose</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
         </search>
-        <option name="charting.chart">line</option>
+        <option name="charting.chart">bar</option>
         <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="refresh.display">progressbar</option>
       </chart>
     </panel>
     <panel>
-      <chart>
-        <title>Engaged Accounts over time</title>
+      <title>Hours used by Product</title>
+      <table>
+        <title>Hours Used</title>
         <search>
-          <query>source=*.csv sourcetype="aws:csv:daily_business_usage_by_instance_type" Customer_AWS_Account_Number!="Customer AWS Account Number" Product_Title="*" | rex field=source "^\w+\d+://\w+\-\w+\-\w+/\w+_\w+_\w+_\w+_(?P&lt;kdate&gt;[^\.]+)" | eval newtime=strptime(kdate,"%Y-%m-%d") | eval _time=newtime | timechart dc(Customer_AWS_Account_Number) span=1d</query>
+          <query>sourcetype="aws:csv:disbursed_amount_by_instance_hours"  source="*.csv" Instance_Hours!="Instance Hours"  Instance_Hours!=NA | stats sum(Instance_Hours) AS "Total Instance Hours" by Product</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Disbursed amount by Instance Hours</title>
+      <single>
+        <search>
+          <query>sourcetype="aws:csv:disbursed_amount_by_instance_hours"  source="*.csv" Instance_Hours!="Instance Hours"  Instance_Hours!=NA | stats sum(Instance_Hours) AS "Total Instance Hours"</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="height">115</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="underLabel">Hours</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Estimated Revenue Total (in USD)</title>
+      <single>
+        <title>Customer Billed</title>
+        <search>
+          <query>sourcetype=aws:csv:monthly_revenue_billing_and_revenue_data source=*.csv Customer_Billed_Amount!="Customer Billed Amount" | stats sum(Customer_Billed_Amount) AS "Customer Billed Amount"</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0.00</option>
+        <option name="rangeColors">["0xdc4e41","0xf1813f","0xf8be34","0x53a051","0x53a051"]</option>
+        <option name="rangeValues">[500,700,900,1000]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="underLabel">Currency in USD</option>
+        <option name="unit">$</option>
+        <option name="unitPosition">before</option>
+        <option name="useColors">1</option>
+      </single>
+      <single>
+        <title>Net Revenue</title>
+        <search>
+          <query>sourcetype=aws:csv:monthly_revenue_billing_and_revenue_data source=*.csv Customer_Billed_Amount!="Customer Billed Amount" | eval net_payment=(Customer_Billed_Amount - Partner_Revenue_Amount) | dedup net_payment | stats sum(net_payment) AS "Net Revenue"</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorMode">block</option>
+        <option name="numberPrecision">0.00</option>
+        <option name="rangeColors">["0xdc4e41","0x0877a6","0xf8be34","0xf1813f","0x53a051"]</option>
+        <option name="rangeValues">[1000,2000,5000,10000]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="underLabel">Currency in USD</option>
+        <option name="unit">$</option>
+        <option name="unitPosition">before</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Net Revenue by Account ID</title>
+      <single>
+        <title>Disbursed Funds</title>
+        <search>
+          <query>sourcetype=aws:csv:monthly_revenue_billing_and_revenue_data source=*.csv Customer_Billed_Amount!="Customer Billed Amount" | eval net_payment=(Customer_Billed_Amount - Partner_Revenue_Amount) | dedup net_payment | stats sum(net_payment) AS "Net Revenue" by Customer_AWS_Account_Number | sort -"Net Revenue"</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0.00</option>
+        <option name="rangeColors">["0xdc4e41","0xf8be34","0xf1813f","0x53a051"]</option>
+        <option name="rangeValues">[0,50000,80000]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">1</option>
+        <option name="trellis.size">large</option>
+        <option name="trellis.splitBy">Customer_AWS_Account_Number</option>
+        <option name="underLabel">Currency in USD</option>
+        <option name="unit">$</option>
+        <option name="unitPosition">before</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Annual</title>
+      <chart>
+        <title>Unique Account ID's over time</title>
+        <search>
+          <query>sourcetype=aws:csv:monthly_revenue_annual_subscriptions source="*.csv"  | eval newtime=strptime(Annual_Subscription_Start_Date,"%Y-%m-%d %H:%M:%S") | eval _time=newtime | timechart count by Customer_AWS_Account_Number useother=false</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
         </search>
         <option name="charting.chart">line</option>
         <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
       </chart>
+    </panel>
+    <panel>
+      <title>Annual</title>
+      <single>
+        <title>Total Unique Subscriptions</title>
+        <search>
+          <query>sourcetype="aws:csv:customer_subscriber_annual_subscriptions"   source="*.csv" | stats dc(Annual_Subscription_Id)</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </single>
     </panel>
   </row>
 </form>
