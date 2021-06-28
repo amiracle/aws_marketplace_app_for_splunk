@@ -1,0 +1,76 @@
+<form>
+  <label>Customer Journey</label>
+  <fieldset submitButton="true" autoRun="true">
+    <input type="dropdown" token="product" searchWhenChanged="true">
+      <label>Product</label>
+      <choice value="*">All Products</choice>
+      <fieldForLabel>Product_Title</fieldForLabel>
+      <fieldForValue>Product_Title</fieldForValue>
+      <search>
+        <query>index=main sourcetype="aws:marketplace:hourly" |  stats count by Product_Title | table Product_Title</query>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </search>
+    </input>
+    <input type="dropdown" token="aws_account_id" searchWhenChanged="true">
+      <label>AWS Account ID</label>
+      <choice value="*">All Accounts</choice>
+      <fieldForLabel>Customer_AWS_Account_Number</fieldForLabel>
+      <fieldForValue>Customer_AWS_Account_Number</fieldForValue>
+      <search>
+        <query>sourcetype="aws:marketplace:hourly" Product_Title="$product$" | stats count by Customer_AWS_Account_Number</query>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </search>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Customer Path to Paid</title>
+      <chart>
+        <search>
+          <query>sourcetype="aws:marketplace:hourly"  Customer_AWS_Account_Number="$aws_account_id$" | timechart count(Customer_AWS_Account_Number) by Product_Title</query>
+          <earliest>-30d@d</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleX.text">Date</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.text">Hours</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisX.abbreviation">none</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.abbreviation">auto</option>
+        <option name="charting.axisY.maximumNumber">24</option>
+        <option name="charting.axisY.minimumNumber">0</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.axisY2.abbreviation">none</option>
+        <option name="charting.axisY2.enabled">0</option>
+        <option name="charting.axisY2.scale">inherit</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.bubbleMaximumSize">50</option>
+        <option name="charting.chart.bubbleMinimumSize">10</option>
+        <option name="charting.chart.bubbleSizeBy">area</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.layout.splitSeries.allowIndependentYRanges">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.mode">standard</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.lineWidth">2</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+      </chart>
+    </panel>
+  </row>
+</form>

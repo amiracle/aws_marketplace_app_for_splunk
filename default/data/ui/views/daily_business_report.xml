@@ -5,37 +5,29 @@
     <input type="time" token="time" searchWhenChanged="true">
       <label>Time</label>
       <default>
-        <earliest>-24h@h</earliest>
+        <earliest>-30d@d</earliest>
         <latest>now</latest>
       </default>
     </input>
     <input type="dropdown" token="st" searchWhenChanged="true">
       <label>sourcetype</label>
-      <choice value="aws:csv:*">All</choice>
+      <choice value="aws:marketplace:*">All</choice>
       <fieldForLabel>sourcetype</fieldForLabel>
       <fieldForValue>sourcetype</fieldForValue>
       <search>
-        <query>sourcetype=aws:csv:* | stats count by sourcetype</query>
+        <query>sourcetype=aws:marketplace:* | stats count by sourcetype</query>
         <earliest>-24h@h</earliest>
         <latest>now</latest>
       </search>
-      <default>aws:csv:daily_business_usage_by_instance_type</default>
-      <initialValue>aws:csv:daily_business_usage_by_instance_type</initialValue>
-    </input>
-    <input type="dropdown" token="span" searchWhenChanged="true">
-      <label>Timespan</label>
-      <choice value="3mon">Quarterly</choice>
-      <choice value="1mon">Monthly</choice>
-      <choice value="12mon">Yearly</choice>
-      <default>3mon</default>
-      <initialValue>3mon</initialValue>
+      <default>aws:marketplace:usage_by_instance_type</default>
+      <initialValue>aws:marketplace:usage_by_instance_type</initialValue>
     </input>
     <input type="dropdown" token="product" searchWhenChanged="true">
       <label>Product</label>
       <fieldForLabel>Product_Title</fieldForLabel>
       <fieldForValue>Product_Title</fieldForValue>
       <search>
-        <query>source=*.csv sourcetype="aws:csv:daily_business_usage_by_instance_type" Product_Title!="Product Title" Customer_Email_Domain!="$e_email$" | stats count(Customer_AWS_Account_Number) AS "Count" by Product_Title</query>
+        <query>index=main  sourcetype="aws:marketplace:hourly" | dedup Product_Title | stats list by Product_Title</query>
         <earliest>-7d@h</earliest>
         <latest>now</latest>
       </search>
@@ -43,66 +35,13 @@
       <default>*</default>
       <initialValue>*</initialValue>
     </input>
-    <input type="dropdown" token="e_email" searchWhenChanged="true">
-      <label>Exclude Email</label>
-      <fieldForLabel>Customer_Email_Domain</fieldForLabel>
-      <fieldForValue>Customer_Email_Domain</fieldForValue>
-      <search>
-        <query>source="*.csv" sourcetype="$st$"    | stats count by Customer_Email_Domain</query>
-        <earliest>-24h@h</earliest>
-        <latest>now</latest>
-      </search>
-      <default>splunk.com</default>
-      <initialValue>splunk.com</initialValue>
-    </input>
   </fieldset>
   <row>
     <panel>
-      <title>Quarterly Revenue Results</title>
-      <table>
-        <search>
-          <query>sourcetype="aws:csv:daily_business_usage_by_instance_type"  source=*.csv  | rex field=source "^\w+\d+://\w+\-\w+\-\w+/\w+_\w+_\w+_\w+_\w+_(?P&lt;kdate&gt;[^\.]+)" | eval newtime=strptime(kdate,"%Y-%m-%d") | eval _time=newtime | timechart sum("Estimated_Revenue") as "Revenue" span="$span$" | fieldformat Revenue = "$USD ".tostring(Revenue, "commas")</query>
-          <earliest>0</earliest>
-          <latest></latest>
-        </search>
-        <option name="count">10</option>
-        <option name="drilldown">none</option>
-        <option name="refresh.display">progressbar</option>
-      </table>
-    </panel>
-    <panel>
-      <title>Quarterly Transactions</title>
-      <table>
-        <search>
-          <query>source=*.csv sourcetype="$st$" Customer_AWS_Account_Number!="Customer AWS Account Number" Product_Title="$product$" Customer_Email_Domain!="$e_email$"  | rex field=source "^\w+\d+://\w+\-\w+\-\w+/\w+_\w+_\w+_\w+_\w+_(?P&lt;kdate&gt;[^\.]+)" | eval newtime=strptime(kdate,"%Y-%m-%d") | eval _time=newtime  | timechart dc(Customer_AWS_Account_Number) AS "Transactions" span=$span$</query>
-          <earliest>0</earliest>
-          <latest></latest>
-        </search>
-        <option name="count">10</option>
-        <option name="drilldown">none</option>
-        <option name="refresh.display">progressbar</option>
-      </table>
-    </panel>
-  </row>
-  <row>
-    <panel>
-      <title>Distinct Count of Customer Email Domains</title>
+      <title>Estimated Hourly Revenues Total (in USD)</title>
       <single>
         <search>
-          <query>source="*.csv"  sourcetype="$st$" Customer_Email_Domain!="Customer Email Domain" Product_Title="$product$" Customer_Email_Domain!="$e_email$" | stats dc(Customer_Email_Domain)</query>
-          <earliest>$time.earliest$</earliest>
-          <latest>$time.latest$</latest>
-          <sampleRatio>1</sampleRatio>
-        </search>
-        <option name="drilldown">none</option>
-        <option name="refresh.display">progressbar</option>
-      </single>
-    </panel>
-    <panel>
-      <title>Estimated Revenues Total (in USD)</title>
-      <single>
-        <search>
-          <query>sourcetype="aws:csv:daily_business_usage_by_instance_type"  source=*.csv Product_Title="$product$" Customer_Email_Domain!="$e_email$"|stats sum("Estimated_Revenue") as "Estimated Revenues USD"</query>
+          <query>sourcetype="$st$" Product_Title="$product$" | dedup Estimated_Revenue | stats sum(Estimated_Revenue)</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
@@ -119,7 +58,7 @@
       <title>Total Unique AWS Account IDs</title>
       <single>
         <search>
-          <query>source="*.csv" sourcetype="$st$" Product_Title="$product$" Product_Title!="Product Title" Customer_Email_Domain!="$e_email$" | stats dc(Customer_AWS_Account_Number)</query>
+          <query>sourcetype="$st$" Product_Title="$product$" Estimated_Revenue!="0.00"  | stats dc(Customer_Reference_ID)</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
@@ -132,22 +71,10 @@
       <title>Average Hours</title>
       <single>
         <search>
-          <query>source=*.csv sourcetype="aws:csv:daily_business_usage_by_instance_type" Instance_Type!="Instance Type" Customer_Email_Domain!="$e_email$" | stats avg(Usage_Units) AS "A_Hours" | eval "Average Hours"=round(A_Hours) | table "Average Hours"</query>
+          <query>sourcetype="$st$" Estimated_Revenue!="0.00" | stats avg(Usage_Units) AS "A_Hours" | eval "Average Hours"=round(A_Hours) | table "Average Hours"</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
-        </search>
-        <option name="drilldown">none</option>
-        <option name="refresh.display">progressbar</option>
-      </single>
-    </panel>
-    <panel>
-      <single>
-        <title>Total Transactions</title>
-        <search>
-          <query>source=*.csv sourcetype="$st$" Customer_AWS_Account_Number!="Customer AWS Account Number" Product_Title="$product$" Customer_Email_Domain!="$e_email$"  | rex field=source "^\w+\d+://\w+\-\w+\-\w+/\w+_\w+_\w+_\w+_\w+_(?P&lt;kdate&gt;[^\.]+)" | eval newtime=strptime(kdate,"%Y-%m-%d") | eval _time=newtime  | timechart dc(Customer_AWS_Account_Number) span=$span$</query>
-          <earliest>0</earliest>
-          <latest></latest>
         </search>
         <option name="drilldown">none</option>
         <option name="refresh.display">progressbar</option>
@@ -159,7 +86,7 @@
       <table>
         <title>Revenue by Product</title>
         <search>
-          <query>sourcetype="aws:csv:daily_business_usage_by_instance_type"  source=*.csv Product_Title!="Product Title" Customer_Email_Domain!="$e_email$" | stats sum(Estimated_Revenue) AS Revenue  by Product_Title | reverse</query>
+          <query>sourcetype="$st$" Estimated_Revenue!="0.00" | dedup Estimated_Revenue | stats sum(Estimated_Revenue) AS Revenue  by Product_Title | reverse</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
         </search>
@@ -167,38 +94,11 @@
         <option name="refresh.display">progressbar</option>
       </table>
     </panel>
-    <panel>
-      <table>
-        <title>Revenue by Account Number</title>
-        <search>
-          <query>source=*.csv sourcetype="$st$" Instance_Type!="Instance Type" Product_Title="$product$" Customer_Email_Domain!="$e_email$"  | stats sum(Estimated_Revenue) AS Revenue by Customer_AWS_Account_Number | sort - Revenue</query>
-          <earliest>$time.earliest$</earliest>
-          <latest>$time.latest$</latest>
-        </search>
-        <option name="drilldown">none</option>
-        <option name="refresh.display">progressbar</option>
-      </table>
-    </panel>
-    <panel>
-      <table>
-        <title>Amount by Customer Email Domain</title>
-        <search>
-          <query>source="*.csv" sourcetype="$st$" Product_Title!="Product Title" Product_Title="$product$" Customer_Email_Domain!="$e_email$"  | stats sum(Estimated_Revenue) AS Revenue by Customer_Email_Domain | fieldformat Revenue = "$USD ".tostring(Revenue, "commas") | sort - "Revenue"</query>
-          <earliest>$time.earliest$</earliest>
-          <latest>$time.latest$</latest>
-        </search>
-        <option name="count">10</option>
-        <option name="drilldown">none</option>
-        <option name="refresh.display">progressbar</option>
-      </table>
-    </panel>
-  </row>
-  <row>
     <panel>
       <chart>
-        <title>Estimated Revenue by Instance Type</title>
+        <title>Deployed Instance Types</title>
         <search>
-          <query>source=*.csv sourcetype="aws:csv:daily_business_usage_by_instance_type" Instance_Type!="Instance Type" Product_Title="$product$"Customer_Email_Domain!="$e_email$" | stats sum(Estimated_Revenue) AS Revenue by Instance_Type | sort - Revenue</query>
+          <query>sourcetype="$st$"  Product_Title="$product$" Estimated_Revenue!="0.00" | eval it=split(Instance_Type, "."), its=mvindex(it, 0)   | stats count by its</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
         </search>
@@ -208,14 +108,26 @@
       </chart>
     </panel>
     <panel>
-      <chart>
-        <title>Deployed Instance Types</title>
+      <table>
+        <title>Revenue by Account Number</title>
         <search>
-          <query>source=*.csv sourcetype="aws:csv:daily_business_usage_by_instance_type" Instance_Type!="Instance Type" Product_Title="$product$" Customer_Email_Domain!="$e_email$" | eval it=split(Instance_Type, "."), its=mvindex(it, 0)   | stats count by its</query>
+          <query>sourcetype="$st$"  Product_Title="$product$" Estimated_Revenue!="0.00" |dedup Estimated_Revenue| stats sum(Estimated_Revenue) AS Revenue by Customer_Reference_ID | sort - Revenue</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
         </search>
-        <option name="charting.chart">pie</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+    <panel>
+      <chart>
+        <title>Estimated Revenue by Instance Type</title>
+        <search>
+          <query>sourcetype="$st$"  Product_Title="$product$" Estimated_Revenue!="0.00" |dedup Estimated_Revenue | stats sum(Estimated_Revenue) AS Revenue by Instance_Type | sort - Revenue</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
         <option name="charting.drilldown">none</option>
         <option name="refresh.display">progressbar</option>
       </chart>

@@ -23,8 +23,8 @@ version = 7.1.0
 modtime = 1525809804.185761000
 
 [views/aws_marketplace_overview]
-version = 7.1.0
-modtime = 1526699097.359274000
+version = 8.1.0
+modtime = 1620323133.633899000
 
 [inputs/script%3A%2F%2F%24SPLUNK_HOME%2Fetc%2Fapps%2Faws_marketplace_app_for_splunk%2Fbin%2Fcustomer_marketplace.sh]
 owner = admin
@@ -68,8 +68,8 @@ version = 7.1.0
 modtime = 1526649726.282627000
 
 [nav/default]
-version = 7.1.0
-modtime = 1526676747.959113000
+version = 8.1.0
+modtime = 1620146848.408568000
 
 [transforms/REPORT-aws%3Acsv]
 owner = admin
@@ -84,5 +84,45 @@ modtime = 1526672239.883098000
 
 [views/health_check]
 owner = admin
-version = 7.1.0
-modtime = 1526676860.330947000
+version = 8.1.0
+modtime = 1618331811.328423000
+
+[lookups/state.csv]
+export = system
+owner = admin
+version = 8.1.0
+modtime = 1617640235.633805000
+
+[transforms/state.csv]
+export = system
+owner = admin
+version = 8.1.0
+modtime = 1617640269.825717000
+
+[views/breakdown_by_geography]
+version = 8.1.0
+modtime = 1620225554.937692000
+
+[props/test]
+owner = admin
+version = 8.1.0
+modtime = 1617648125.794327000
+
+[views/daily_business_report]
+version = 8.1.0
+modtime = 1620750475.808271000
+
+[lookups/country_list.csv]
+export = system
+owner = admin
+version = 8.1.0
+modtime = 1617745113.425847000
+
+[views/aws_marketplace_reports]
+version = 8.1.0
+modtime = 1621873304.786575000
+
+[views/customer_journey]
+owner = admin
+version = 8.1.0
+modtime = 1622131874.521797000

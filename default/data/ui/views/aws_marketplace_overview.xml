@@ -1,6 +1,6 @@
 <form>
   <label>AWS Marketplace Overview</label>
-  <description>Overview of Marketplace transactions</description>
+  <description>Overview of Marketplace Subscriptions</description>
   <fieldset submitButton="true" autoRun="true">
     <input type="time" token="time">
       <label>Time</label>
@@ -16,7 +16,7 @@
       <chart>
         <title>Orders over time</title>
         <search>
-          <query>index=main sourcetype="aws:csv:customer_subscriber_annual_subscriptions"    source="*.csv" | eval newtime=strptime(Subscription_Start_Date,"%Y-%m-%d") | eval _time=newtime | timechart count</query>
+          <query>index=main  sourcetype="aws:marketplace:hourly" | dedup "Payer_Reference_ID" | eval newtime=strptime(Subscription_Start_Date,"%Y-%m-%d") | eval _time=newtime | timechart count</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
         </search>
@@ -33,7 +33,7 @@
       <chart>
         <title>Product by Rate</title>
         <search>
-          <query>source=*.csv sourcetype="aws:csv:customer_subscriber_annual_subscriptions"    | stats count(eval(like(Product_Title, "%Splunk Cloud%"))) AS "Splunk Cloud", count(eval(like(Product_Title, "%Splunk Light%"))) AS "Splunk Light", count(eval(like(Product_Title, "%Splunk Enterprise%"))) AS "Splunk Enterprise" | transpose</query>
+          <query>index=main sourcetype="aws:marketplace:hourly" | dedup "Payer_Reference_ID" |  rename Product_Title AS "Products" | stats count by Products | sort -count</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
         </search>
@@ -48,7 +48,7 @@
       <table>
         <title>Hours Used</title>
         <search>
-          <query>sourcetype="aws:csv:disbursed_amount_by_instance_hours"  source="*.csv" Instance_Hours!="Instance Hours"  Instance_Hours!=NA | stats sum(Instance_Hours) AS "Total Instance Hours" by Product</query>
+          <query>index=main  sourcetype="aws:marketplace:usage_by_instance_type"  | dedup "Usage_Units" | stats sum(Usage_Units) AS "Total Instance Hours" by Product_Title</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
@@ -57,6 +57,37 @@
         <option name="refresh.display">progressbar</option>
       </table>
     </panel>
+    <panel>
+      <title>Annual</title>
+      <single>
+        <title>Total Unique Subscriptions</title>
+        <search>
+          <query>index=main  sourcetype="aws:marketplace:hourly" NOT Cribl="*"   |stats dc(Customer_Reference_ID)</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Annual</title>
+      <chart>
+        <title>Unique Account ID's over time</title>
+        <search>
+          <query>index=main  sourcetype="aws:marketplace:hourly" | eval newtime=strptime(Subscription_Start_Date,"%Y-%m-%d") | eval _time=newtime | timechart count by Customer_AWS_Account_Number useother=false</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
     <panel>
       <title>Disbursed amount by Instance Hours</title>
       <single>
@@ -140,35 +171,6 @@
         <option name="unit">$</option>
         <option name="unitPosition">before</option>
         <option name="useColors">1</option>
-      </single>
-    </panel>
-  </row>
-  <row>
-    <panel>
-      <title>Annual</title>
-      <chart>
-        <title>Unique Account ID's over time</title>
-        <search>
-          <query>sourcetype=aws:csv:monthly_revenue_annual_subscriptions source="*.csv"  | eval newtime=strptime(Annual_Subscription_Start_Date,"%Y-%m-%d %H:%M:%S") | eval _time=newtime | timechart count by Customer_AWS_Account_Number useother=false</query>
-          <earliest>$time.earliest$</earliest>
-          <latest>$time.latest$</latest>
-        </search>
-        <option name="charting.chart">line</option>
-        <option name="charting.drilldown">none</option>
-        <option name="refresh.display">progressbar</option>
-      </chart>
-    </panel>
-    <panel>
-      <title>Annual</title>
-      <single>
-        <title>Total Unique Subscriptions</title>
-        <search>
-          <query>sourcetype="aws:csv:customer_subscriber_annual_subscriptions"   source="*.csv" | stats dc(Annual_Subscription_Id)</query>
-          <earliest>$time.earliest$</earliest>
-          <latest>$time.latest$</latest>
-        </search>
-        <option name="drilldown">none</option>
-        <option name="refresh.display">progressbar</option>
       </single>
     </panel>
   </row>

@@ -1,13 +1,65 @@
-<dashboard>
+<form>
   <label>Breakdown by Geography</label>
+  <fieldset submitButton="false" autoRun="true">
+    <input type="time" token="field1">
+      <label></label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
   <row>
+    <panel>
+      <map>
+        <title>Count by State</title>
+        <search>
+          <query>index=main sourcetype="aws:marketplace:*" sourcetype="aws:marketplace:usage_by_instance_type" | lookup state.csv state_ab AS User_s_State OUTPUT state | stats count by state | geom geo_us_states featureIdField=state</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="mapping.map.center">(37.93,-92.68)</option>
+        <option name="mapping.map.zoom">4</option>
+        <option name="mapping.type">choropleth</option>
+      </map>
+    </panel>
+    <panel>
+      <title>Net Revenue by State</title>
+      <table>
+        <search>
+          <query>index=main sourcetype=aws:marketplace:* sourcetype="aws:marketplace:usage_by_instance_type" Estimated_Revenue!="0.00"|  dedup Estimated_Revenue | stats sum(Estimated_Revenue) AS Revenue by User_s_State | fieldformat Revenue = "$USD ".tostring(Revenue, "commas")</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <map>
+        <title>Global View</title>
+        <search>
+          <query>index=main sourcetype="aws:marketplace:*" sourcetype="aws:marketplace:usage_by_instance_type" | lookup customer_country iso2 AS Users_Country OUTPUT country | stats count by country | geom geo_countries featureIdField=country</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="mapping.map.center">(19.97,0.7)</option>
+        <option name="mapping.map.zoom">1</option>
+        <option name="mapping.type">choropleth</option>
+      </map>
+    </panel>
     <panel>
       <title>Net Revenue by Country</title>
       <table>
         <search>
-          <query>source="*.csv"  sourcetype="aws:csv:sales_compensation_billed_revenue" Country!=Country | stats sum(Net_Revenue) AS "Revenue" by Country | fieldformat Revenue = "$USD ".tostring(Revenue, "commas") | sort -"Revenue"</query>
-          <earliest>-30d@d</earliest>
-          <latest>now</latest>
+          <query>index=main sourcetype=aws:marketplace:* sourcetype="aws:marketplace:usage_by_instance_type"  Estimated_Revenue!="0.00" | dedup Estimated_Revenue | stats sum(Estimated_Revenue) AS Revenue by Users_Country  | fieldformat Revenue = "$USD ".tostring(Revenue, "commas")</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
           <sampleRatio>1</sampleRatio>
         </search>
         <option name="count">20</option>
@@ -20,18 +72,5 @@
         <option name="wrap">true</option>
       </table>
     </panel>
-    <panel>
-      <title>Net Revenue by State</title>
-      <table>
-        <search>
-          <query>source="*.csv"  sourcetype="aws:csv:sales_compensation_billed_revenue" Country!=Country | stats sum(Net_Revenue) AS Revenue by State | fieldformat Revenue = "$USD ".tostring(Revenue, "commas") | sort - "Revenue"</query>
-          <earliest>-30d@d</earliest>
-          <latest>now</latest>
-        </search>
-        <option name="count">10</option>
-        <option name="drilldown">none</option>
-        <option name="refresh.display">progressbar</option>
-      </table>
-    </panel>
   </row>
-</dashboard>
+</form>

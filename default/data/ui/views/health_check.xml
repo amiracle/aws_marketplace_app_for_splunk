@@ -12,14 +12,29 @@
   </fieldset>
   <row>
     <panel>
-      <single>
-        <title>Number of Errors</title>
+      <table>
+        <title>Count by Source</title>
         <search>
-          <query>index=_internal sourcetype=splunkd aws_marketplace* log_level=ERROR | stats count</query>
+          <query>sourcetype="aws:marketplace:*" | rex field=source "^\w+\d+://\w+\-\w+\-\w+\-\w+\-\w+/\w+_\w+_\w+_\w+_\w+_(?P&lt;kdate&gt;[^\.]+)"| rex field=source "^(?:[^/\n]*/){3}(?P&lt;report&gt;[a-z]+_[a-z]+_[a-z]+_[a-z]+_[a-z]+)" | stats dc(source) AS "count" by report,kdate  | sort -kdate</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
         </search>
         <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <single>
+        <title>Number of Errors</title>
+        <search>
+          <query>index=_internal sourcetype=splunkd *marketplace* log_level=ERROR | stats count</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
       </single>
     </panel>
     <panel>
@@ -41,7 +56,7 @@
       <title>Size by S3 Bucket</title>
       <single>
         <search>
-          <query>index=_internal sourcetype="aws:s3:log" bucket_name=*marketplace* | eval mb=size/1024/1024 | stats sum(mb) AS Size by bucket_name | table Size</query>
+          <query>index=_internal sourcetype="aws:s3:log" | eval mb=size/1024/1024 | stats sum(mb) AS Size by bucket_name | table Size</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
         </search>
@@ -58,7 +73,7 @@
       <table>
         <title>Dates Collected</title>
         <search>
-          <query>sourcetype="aws:csv:daily_business_*" source=*.csv | stats count by source | rex field=source "^\w+\d+://\w+\-\w+\-\w+/\w+_\w+_\w+_\w+_\w+_(?P&lt;kdate&gt;[^\.]+)" | table kdate source | sort -kdate</query>
+          <query>sourcetype="aws:marketplace:*" | stats count by source | rex field=source "^\w+\d+://\w+\-\w+\-\w+\-\w+\-\w+/\w+_\w+_\w+_\w+_\w+_(?P&lt;kdate&gt;[^\.]+)" | table kdate source | sort -kdate</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
         </search>
@@ -97,11 +112,12 @@
       <table>
         <title>Detailed steps for indexing data from s3 bucket</title>
         <search>
-          <query>index=_internal sourcetype="aws:s3:log" bucket_name=*marketplace* | dedup message | stats list(message) by bucket_name</query>
+          <query>index=_internal sourcetype="aws:s3:log"  | dedup message | stats list(message) by bucket_name</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
         </search>
         <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
       </table>
     </panel>
   </row>
